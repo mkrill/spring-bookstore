@@ -1,7 +1,6 @@
 package com.wildcodeschool.spring.bookstore.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 
@@ -90,17 +89,53 @@ class CarControllerTest {
 	@Test
 	void shouldBeAbleToModifyACar() throws Exception {
 		// Given | Arrange
+		Car carForUpload = new Car();
+		carForUpload.setModel("Tesla Model 3000");
 		// When
+		MvcResult result = mock.perform(MockMvcRequestBuilders.post("/car/upsert")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", carForUpload)).andReturn();
 		// Then
-		fail();
+		assertThat(result.getResponse().getStatus()).isEqualTo(302);
+		List<Car> results = carRepo.findAll(Example.of(carForUpload));
+		assertThat(results).hasSize(1);
+
+		Car carToUpdate = results.get(0);
+
+		carToUpdate.setModel("Tesla Model 3001");
+		MvcResult resultUpdate = mock.perform(MockMvcRequestBuilders.post("/car/upsert")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", carToUpdate)).andReturn();
+		// Then
+		assertThat(resultUpdate.getResponse().getStatus()).isEqualTo(302);
+		List<Car> resultsUpdate = carRepo.findAll(Example.of(carToUpdate));
+		assertThat(resultsUpdate).hasSize(1);
+		
+		assertThat(resultsUpdate.get(0).getModel()).isEqualTo("Tesla Model 3001");
+		
 	}
 
 	@Test
 	void shouldBeAbleToDeleteACar() throws Exception {
 		// Given | Arrange
+		Car carForUpload = new Car();
+		carForUpload.setModel("Tesla Model 3000");
 		// When
+		MvcResult result = mock.perform(MockMvcRequestBuilders.post("/car/upsert")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", carForUpload)).andReturn();
 		// Then
-		fail();
+		assertThat(result.getResponse().getStatus()).isEqualTo(302);
+		List<Car> results = carRepo.findAll(Example.of(carForUpload));
+		assertThat(results).hasSize(1);
+
+		Long idToDelete= results.get(0).getId();
+		
+		MvcResult resultDeletion = mock.perform(MockMvcRequestBuilders.get("/car/" + idToDelete + "/delete")).andReturn();
+		
+		// When | Act
+		MvcResult resultAllCars = mock.perform(MockMvcRequestBuilders.get("/cars")).andReturn();
+		// Then | Assert
+		List<Car> books = getCarsFromModel(resultAllCars);
+		assertThat(books).hasSize(0);		
+		
 	}
 
 	private List<Car> getCarsFromModel(MvcResult result) {
