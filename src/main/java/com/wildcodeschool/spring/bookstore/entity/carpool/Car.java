@@ -1,7 +1,7 @@
 package com.wildcodeschool.spring.bookstore.entity.carpool;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -29,12 +29,12 @@ public class Car {
 	private String model;
 	
 	@OneToMany(mappedBy = "car")
-	private List<Transportation> transportations = new ArrayList<>();
+	private Set<Transportation> transportations = new HashSet<>();
 	
 	@ManyToMany
 	@JoinTable(name = "owner_car", 
 		joinColumns = @JoinColumn(name = "car_id"), 
 		inverseJoinColumns = @JoinColumn(name = "customer_id"))
-	private List<Customer> owners = new ArrayList<>();
+	private Set<Customer> owners = new HashSet<>();
 
 }

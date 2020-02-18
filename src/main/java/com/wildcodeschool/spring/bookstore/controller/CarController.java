@@ -15,7 +15,7 @@ import com.wildcodeschool.spring.bookstore.repository.CarRepository;
 @Controller
 public class CarController {
 	
-	private CarRepository carRepository;
+	private final CarRepository carRepository;
 	
 	
 	@Autowired
@@ -34,13 +34,13 @@ public class CarController {
 	@PostMapping("/car/upsert")
 	public String upsert(Car car) {
 		carRepository.save(car);
-		return "redirect:car/get_all";
+		return "redirect:/cars";
 	}
 
 	@GetMapping("/car/{id}/delete")
 	public String delete(@PathVariable Long id) {
 		carRepository.deleteById(id);
-		return "redirect: car/get_all";
+		return "redirect:/cars";
 		
 	}
 

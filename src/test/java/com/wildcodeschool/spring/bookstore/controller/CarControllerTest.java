@@ -3,6 +3,7 @@ package com.wildcodeschool.spring.bookstore.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,8 +45,8 @@ class CarControllerTest {
 		// When | Act
 		MvcResult result = mock.perform(MockMvcRequestBuilders.get("/cars")).andReturn();
 		// Then | Assert
-		List<Car> books = getCarsFromModel(result);
-		assertThat(books).hasSize(0);
+		List<Car> cars = getCarsFromModel(result);
+		assertThat(cars).hasSize(0);
 	}
 
 	@Test
@@ -55,8 +56,8 @@ class CarControllerTest {
 		// When | Act
 		MvcResult result = mock.perform(MockMvcRequestBuilders.get("/cars")).andReturn();
 		// Then | Assert
-		List<Car> books = getCarsFromModel(result);
-		assertThat(books).hasSize(1);
+		List<Car> cars = getCarsFromModel(result);
+		assertThat(cars).hasSize(1);
 	}
 
 	@Test
@@ -64,11 +65,14 @@ class CarControllerTest {
 		// Given | Arrange
 		givenACarInTheDatabase("Tesla Model 3");
 		givenACarInTheDatabase("Renault Zoe");
+
 		// When | Act
 		MvcResult result = mock.perform(MockMvcRequestBuilders.get("/cars")).andReturn();
+
 		// Then | Assert
-		List<Car> books = getCarsFromModel(result);
-		assertThat(books).hasSize(2);
+		assertThat(result.getResponse().getStatus()).isEqualTo(200);
+		List<Car> cars = getCarsFromModel(result);
+		assertThat(cars).hasSize(2);
 	}
 
 	@Test
@@ -76,9 +80,13 @@ class CarControllerTest {
 		// Given | Arrange
 		Car carForUpload = new Car();
 		carForUpload.setModel("Tesla Model 3000");
-		// When
+
+		// When | Act
 		MvcResult result = mock.perform(MockMvcRequestBuilders.post("/car/upsert")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", carForUpload)).andReturn();
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.flashAttr("car", carForUpload))
+				.andReturn();
+
 		// Then
 		assertThat(result.getResponse().getStatus()).isEqualTo(302);
 		List<Car> results = carRepo.findAll(Example.of(carForUpload));
@@ -89,52 +97,36 @@ class CarControllerTest {
 	@Test
 	void shouldBeAbleToModifyACar() throws Exception {
 		// Given | Arrange
-		Car carForUpload = new Car();
-		carForUpload.setModel("Tesla Model 3000");
-		// When
-		MvcResult result = mock.perform(MockMvcRequestBuilders.post("/car/upsert")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", carForUpload)).andReturn();
-		// Then
-		assertThat(result.getResponse().getStatus()).isEqualTo(302);
-		List<Car> results = carRepo.findAll(Example.of(carForUpload));
-		assertThat(results).hasSize(1);
+		Car carExisting = givenACarInTheDatabase("Tesla Model 3");		
 
-		Car carToUpdate = results.get(0);
+		Car modifiedCar = new Car();
+		modifiedCar.setId(carExisting.getId());
+		modifiedCar.setModel("Tesla Model 3001");
 
-		carToUpdate.setModel("Tesla Model 3001");
-		MvcResult resultUpdate = mock.perform(MockMvcRequestBuilders.post("/car/upsert")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", carToUpdate)).andReturn();
+		// When | Act
+		MvcResult resultOfUpdate = mock.perform(MockMvcRequestBuilders.post("/car/upsert")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", modifiedCar)).andReturn();
+
 		// Then
-		assertThat(resultUpdate.getResponse().getStatus()).isEqualTo(302);
-		List<Car> resultsUpdate = carRepo.findAll(Example.of(carToUpdate));
-		assertThat(resultsUpdate).hasSize(1);
-		
-		assertThat(resultsUpdate.get(0).getModel()).isEqualTo("Tesla Model 3001");
+		assertThat(resultOfUpdate.getResponse().getStatus()).isEqualTo(302);
+		List<Car> carsAfterUpdateInRepo = carRepo.findAll(Example.of(modifiedCar));
+		assertThat(carsAfterUpdateInRepo).hasSize(1);		
+		assertThat(carsAfterUpdateInRepo.get(0).getModel()).isEqualTo("Tesla Model 3001");
 		
 	}
 
 	@Test
 	void shouldBeAbleToDeleteACar() throws Exception {
 		// Given | Arrange
-		Car carForUpload = new Car();
-		carForUpload.setModel("Tesla Model 3000");
+		Car carToDelete = givenACarInTheDatabase("Tesla Model 3");
+		
 		// When
-		MvcResult result = mock.perform(MockMvcRequestBuilders.post("/car/upsert")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", carForUpload)).andReturn();
-		// Then
-		assertThat(result.getResponse().getStatus()).isEqualTo(302);
-		List<Car> results = carRepo.findAll(Example.of(carForUpload));
-		assertThat(results).hasSize(1);
+		MvcResult resultOfDelete = mock.perform(MockMvcRequestBuilders.get("/car/" + carToDelete.getId() + "/delete")).andReturn();
 
-		Long idToDelete= results.get(0).getId();
-		
-		MvcResult resultDeletion = mock.perform(MockMvcRequestBuilders.get("/car/" + idToDelete + "/delete")).andReturn();
-		
-		// When | Act
-		MvcResult resultAllCars = mock.perform(MockMvcRequestBuilders.get("/cars")).andReturn();
 		// Then | Assert
-		List<Car> books = getCarsFromModel(resultAllCars);
-		assertThat(books).hasSize(0);		
+		assertThat(resultOfDelete.getResponse().getStatus()).isEqualTo(302);
+		Optional<Car> carInDBOptional = carRepo.findOne(Example.of(carToDelete));
+		assertThat(carInDBOptional).isEmpty();		
 		
 	}
 

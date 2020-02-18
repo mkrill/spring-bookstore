@@ -1,6 +1,6 @@
 package com.wildcodeschool.spring.bookstore.entity.carpool;
 
-import java.sql.Date;
+import java.time.LocalDateTime;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -21,18 +21,17 @@ public class Transportation {
 
 	@Id
 	@GeneratedValue(strategy =GenerationType.IDENTITY)
-	Long id;
+	private Long id;
 	
-	Date transportation_end;
-	
-	Date transprotation_start;
+	private LocalDateTime transportation_end;	
+	private LocalDateTime transportation_start;
 
 	@ManyToOne
 	@JoinColumn(name = "car_id")
-	Car car;
+	private Car car;
 	
 	@ManyToOne
 	@JoinColumn(name = "passenger_id")
-	Customer passenger;
+	private Customer passenger;
 	
 }
